@@ -42,8 +42,29 @@ let deepfocus = 'spotify:user:spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'
 // Trancendance Obejct
 const Trancendance = [
     {
-
+        playlistID: chillHipHop,
+        lState: state4
     },
+    {
+        playlistID: piano,
+        lState: state2
+    },
+    {
+        playlistID: brainfood,
+        lState: state1
+    },
+    {
+        playlistID: deepfocus,
+        lState: state3
+    },
+    {
+        playlistID: jazztronica,
+        lState: state5
+    },
+    {
+        playlistID: funkst,
+        lState: state6
+    }
 ]
 
 // Express Router
@@ -97,18 +118,19 @@ app.get('/spotifycallback', (req,res) => {
     
             // Save the amount of seconds until the access token expired
             tokenExpirationEpoch = (new Date().getTime() / 1000) + data.body['expires_in']
-            console.log('Retrieved token. It expires in ' + Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) + ' seconds!')
+            let secondsRemaining = Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000)
+            console.log('Retrieved token. It expires in ' + secondsRemaining + ' seconds!')
 
             // Set timer to tell us when the token expires
             setInterval(() => {
                 console.log('Token expired.')
-                // spotifyApi.refreshAccessToken()
-                // .then(function(data) {
-                //     // Do something, like calling refresh in another 3600 secs
-                // }, function(err) {
-                //     console.log('Could not refresh the token!', err.message)
-                // })
-            }, Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000))
+                spotifyApi.refreshAccessToken()
+                .then(function(data) {
+                    console.log("Token refreshed")
+                }, function(err) {
+                    console.log('Could not refresh the token!', err.message)
+                })
+            }, secondsRemaining * 1000)
             return res.redirect('/success')
         }, function(err) {
             console.log('Something went wrong when retrieving the access token!', err.message)
@@ -168,7 +190,7 @@ app.get('/:num',(req,res) => {
             return res.status(500).send("Error with Spotify Play function")
         }
     }).then(() => {
-        return bridge.setLightState('5',state.lightState)
+        return bridge.setLightState('5',state.lState)
         .then((result) => {
         }).fail((err) => {
             console.error(err)
