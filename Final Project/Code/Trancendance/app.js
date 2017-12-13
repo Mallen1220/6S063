@@ -29,12 +29,11 @@ let state3 = lightState.create().on().rgb(255,52,15).bri(255) // Red
 let state4 = lightState.create().on().rgb(255,251,132).bri(255) // Beige Yellow
 let state5 = lightState.create().on().rgb(233,170,255).bri(255) // Light Purple
 let state6 = lightState.create().on().rgb(163,255,58).bri(255) // Green
-
+let resetState = lightState.create().on().rgb(255,255,255).bri(200) // White moderate bright
 // Spotify Playlists
 let chillHipHop = 'spotify:user:chillhopmusic:playlist:74sUjcvpGfdOvCHvgzNEDO'
 let funkst = 'spotify:user:spotify:playlist:37i9dQZF1DX7Q7o98uPeg1'
 let brainfood = 'spotify:user:spotify:playlist:37i9dQZF1DWXLeA8Omikj7'
-
 let jazztronica = 'spotify:user:spotify:playlist:37i9dQZF1DX55dNU0PWnO5'
 let piano = 'spotify:user:spotify:playlist:37i9dQZF1DX4sWSpwq3LiO'
 let deepfocus = 'spotify:user:spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'
@@ -202,6 +201,20 @@ app.get('/state/:num',(req,res) => {
         }).done()
     }).then(() => {
         return res.send("Done")
+    }).catch((err) => {
+        console.error(err)
+        res.status(500).send(err)
+    })
+})
+
+app.get('/reset',(req,res) => {
+    // Set the lightState to moderate bright
+    // Music to pause
+    spotifyApi.pause()
+    .then((result) => {
+        return bridge.setLightState('5',resetState)
+    }).then(() => {
+        return res.send("Reset Done")
     }).catch((err) => {
         console.error(err)
         res.status(500).send(err)
