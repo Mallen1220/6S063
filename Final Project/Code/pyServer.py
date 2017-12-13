@@ -2,10 +2,17 @@ import argparse
 import math
 import time
 import threading
+import requests
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
+# Nodejs Control Server
+host = 'http://localhost:3000'
+state_address = '/state/'
+reset_address = '/reset'
+
+# Calibration Variables
 is_callibrated = False
 startTime = 0
 cycle = 0
@@ -24,28 +31,9 @@ rollingMax = 3
 maxF = 0
 maxR = 0
 
-maxF_i = None
-maxR_i = None
+maxF_i = 3
+maxR_i = 1
 
-
-def print_volume_handler(unused_addr, args, volume):
-  print("[{0}] ~ {1}".format(args[0], volume))
-
-def print_compute_handler(unused_addr, args, volume):
-  try:
-    print("[{0}] ~ {1}".format(args[0], args[1](volume)))
-  except ValueError: pass
-
-def parseFFT(addr, *args):
-    # args is a tuple of 126 values
-    # First value is channel #
-    # Next 125 values are the amplitude values of the ith frequency
-
-    # print(len(args))
-    pass
-
-def parseTimeSeries(addr, *args):
-    print("TS: ",args)
 
 def parseBandPower(addr, *args):
     #print("BP: ",args)
@@ -62,7 +50,6 @@ def parseBandPower(addr, *args):
         if node == 0:
             print(rollingAverage[node][4])
         """
-        
     else:
         if cycle == 0 or cycle > totalCycles:
             return
@@ -115,23 +102,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dispatcher = dispatcher.Dispatcher()
-    dispatcher.map("/openbciFFT", parseFFT)
-    dispatcher.map("/openbciTS", parseTimeSeries)
-    dispatcher.map("/openbciBP", parseBandPower)
-
-    
+    dispatcher.map("/openbciBP", parseBandPower)    
 
     server = osc_server.ThreadingOSCUDPServer(
         (args.ip, args.port), dispatcher)
     print("Serving on {}".format(server.server_address))
-    #server.serve_forever()
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
     
-    print("LOOP STARTING")
-    
-    inp = None
+    # Reset light and music
+    request = requests.get(host + reset_address)
+    print(request.text)
 
+    print("LOOP STARTING")
+    inp = None
     while (True):
         if inp == "calibrate" or inp == "c":
             # Run calibration
@@ -143,6 +127,9 @@ if __name__ == "__main__":
             # REST in Python: http://docs.python-requests.org/en/latest/
             #
             # Store most focused state combination and most relaxed state combination
+
+            # Send request to reset light and music
+            
 
             if cycle == 0:
                 startTime = time.time()
@@ -208,32 +195,36 @@ if __name__ == "__main__":
 
         elif inp == "relax" or inp == "r":
             # Use the calibrated settings to make user relaxed
-            r_c = 0
-            for node in range(4):
-                r_c += confidenceRelax(rollingAverageVal[node])
-            r_c /= 5.0
+            # r_c = 0
+            # for node in range(4):
+            #     r_c += confidenceRelax(rollingAverageVal[node])
+            # r_c /= 5.0
 
-            if r_c + 0.1 < maxR:
-                print("NOT RELAXED, do something:    " + str(maxR - r_c))
-            else:
-                print("RELAXED:    " + str(r_c - maxR))
+            # if r_c + 0.1 < maxR:
+            #     print("NOT RELAXED, do something:    " + str(maxR - r_c))
+            # else:
+            #     print("RELAXED:    " + str(r_c - maxR))
+            
+            request = requests.get(host + state_address + str(maxR_i))
+            print(request.text)
+            inp = None
 
             #print(confidenceRelax(rollingAverageVal[0]))
             pass
         elif inp == "focus" or inp == "f":
             # Use the calibrated settings to make user focused
-            f_c = 0
-            for node in range(4):
-                f_c += confidenceFocus(rollingAverageVal[node])
-            f_c /= 5.0
+            # f_c = 0
+            # for node in range(4):
+            #     f_c += confidenceFocus(rollingAverageVal[node])
+            # f_c /= 5.0
 
-            if f_c + 0.1 < maxF:
-                print("NOT FOCUSED, do something:    " + str(maxF - f_c))
-            else:
-                print("FOCUSED:    " + str(f_c - maxF))
-
-            #print(confidenceFocus(rollingAverageVal[0]))
-            pass
+            # if f_c + 0.1 < maxF:
+            #     print("NOT FOCUSED, do something:    " + str(maxF - f_c))
+            # else:
+            #     print("FOCUSED:    " + str(f_c - maxF))
+            request = requests.get(host + state_address + str(maxF_i))
+            print(request.text)
+            inp = None
         elif inp == "q" or inp == "quit":
             print("Quitting application...")
             break
