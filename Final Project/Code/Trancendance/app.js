@@ -73,23 +73,12 @@ app.get('/', (req, res) => res.send('Transcendance'))
 // -------------------- //
 // Hue Interface Routes //
 // -------------------- //
-app.get('/state/',(req,res) => {
+app.get('/huestate/',(req,res) => {
     bridge.getFullState().then((result) => {
         res.json(result)
     }).catch((err) => {
         res.send("Error: " + err)
     }).done()
-})
-
-app.get('/test/on',(req,res) => {
-    bridge.setLightState('5',lightState.create().on())
-    res.send("Turned On")
-})
-
-
-app.get('/test/off',(req,res) => {
-    bridge.setLightState('5',lightState.create().off())
-    res.send("Turned Off")
 })
 
 // ------------------------ //
@@ -152,39 +141,54 @@ app.get('/error', (req,res) => {
 })
 
 app.get('/play/:playlistID',(req,res) => {
-    spotifyApi.play()
+    let plID = req.params.playlistID || null;
+    let spotifyArgs = {}
+    if (plID != '') {
+        spotifyArgs.context_uri = plID
+    }
+    spotifyApi.play(spotifyArgs)
     .then(data => {
-        res.status(data.statusCode).send("Status Code: " + data.statusCode)
+        return res.status(data.statusCode).send("Status Code: " + data.statusCode)
+    }).catch((err) => {
+        console.error(err)
+        return res.status(500).send(err)
     })
 })
 
 app.get('/pause',(req,res) => {
     spotifyApi.pause()
     .then(data => {
-        res.status(data.statusCode).send("Status Code: " + data.statusCode)
+        return res.status(data.statusCode).send("Status Code: " + data.statusCode)
+    }).catch((err) => {
+        console.error(err)
+        return res.status(500).send(err)
     })
 })
 
 app.get('/listdevices',(req,res) => {
     spotifyApi.getMyDevices()
     .then(data => {
-        res.status(data.statusCode).json(data.body)
+        return res.status(data.statusCode).json(data.body)
+    }).catch((err) => {
+        console.error(err)
+        return res.status(500).send(err)
     })
 })
 
 // ---------------- //
 // Trancendance API //
 // ---------------- //
-app.get('/:num',(req,res) => {
+app.get('/state/:num',(req,res) => {
     let combo = req.params.num
-    let state = trancendance[combo]
+    let state = Trancendance[combo]
     
     // Spotify state
     let spotifyArgs = {
         context_uri: state.playlistID
     }
-    spotifyApi.play(spotifyArgs)
-    .then((data) => {
+    spotifyApi.setShuffle({state:true}).then((data) => {
+        return spotifyApi.play(spotifyArgs)
+    }).then((data) => {
         if (data.statusCode != 204) {
             console.log("Status: " + data.statusCode)
             return res.status(500).send("Error with Spotify Play function")
@@ -198,6 +202,9 @@ app.get('/:num',(req,res) => {
         }).done()
     }).then(() => {
         return res.send("Done")
+    }).catch((err) => {
+        console.error(err)
+        res.status(500).send(err)
     })
 })
 
