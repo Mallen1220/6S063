@@ -18,18 +18,33 @@ var spotifyApi = new SpotifyWebApi({
 var hue = require('node-hue-api'),
 HueApi = hue.HueApi,
 lightState = hue.lightState,
-host = '192.168.0.100',
-username = 'JShMgr2F2OmUu5ZebZQtUTNsg0bkgUH0VjeG4qg5'
+//host = '192.168.0.100', // Max's bridge
+// username = 'JShMgr2F2OmUu5ZebZQtUTNsg0bkgUH0VjeG4qg5', // Max's bridge
+host = '192.168.1.141', // Tim's bridge
+username = 'AqV0Pfsfnm1OQBnFDL2bf5HxkAKYHldbLw9MbF4m', // Tim's bridge
+availableLights = []
 var bridge = new HueApi(host,username)
 
+bridge.lights()
+.then((data) => {
+    availableLights = data.lights.filter((elem) => {
+        return elem.state.reachable == true
+    })
+    availableLights = availableLights.map((elem) => {
+        return elem.id
+    })
+    console.log("Available Lights: " + availableLights)
+})
+
 // Custom Light States
-let state1 = lightState.create().on().rgb(138,185,201).bri(255) // Light Blue
+let state1 = lightState.create().on().rgb(253,154,95).bri(255) // Orange-Yellow
 let state2 = lightState.create().off() // Off
-let state3 = lightState.create().on().rgb(255,52,15).bri(255) // Red
-let state4 = lightState.create().on().rgb(255,251,132).bri(255) // Beige Yellow
+let state3 = lightState.create().on().rgb(216,245,255).bri(255) // White-Blue
+let state4 = lightState.create().on().rgb(255,249,191).bri(255) // White-Yellow
 let state5 = lightState.create().on().rgb(233,170,255).bri(255) // Light Purple
-let state6 = lightState.create().on().rgb(163,255,58).bri(255) // Green
+let state6 = lightState.create().on().rgb(80,95,255).bri(255) // Blue purple
 let resetState = lightState.create().on().rgb(255,255,255).bri(200) // White moderate bright
+
 // Spotify Playlists
 let chillHipHop = 'spotify:user:chillhopmusic:playlist:74sUjcvpGfdOvCHvgzNEDO'
 let funkst = 'spotify:user:spotify:playlist:37i9dQZF1DX7Q7o98uPeg1'
@@ -42,7 +57,7 @@ let deepfocus = 'spotify:user:spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'
 const Trancendance = [
     {
         playlistID: chillHipHop,
-        lState: state4
+        lState: state1
     },
     {
         playlistID: piano,
@@ -50,11 +65,11 @@ const Trancendance = [
     },
     {
         playlistID: brainfood,
-        lState: state1
+        lState: state3
     },
     {
         playlistID: deepfocus,
-        lState: state3
+        lState: state4
     },
     {
         playlistID: jazztronica,
@@ -74,10 +89,27 @@ app.get('/', (req, res) => res.send('Transcendance'))
 // -------------------- //
 app.get('/huestate/',(req,res) => {
     bridge.getFullState().then((result) => {
-        res.json(result)
+        return res.json(result)
     }).catch((err) => {
-        res.send("Error: " + err)
-    }).done()
+        return res.send("Error: " + err)
+    })
+})
+
+app.get('/rgb/:r/:g/:b/:bri',(req,res) => {
+    let r = req.params.r,
+        g = req.params.g,
+        b = req.params.b,
+        bri = req.params.bri || 255
+
+    let lightPromises = availableLights.map((lightID) => {
+        return bridge.setLightState(lightID,lightState.create().on().rgb(r,g,b).bri(bri))
+    })
+    Promise.all(lightPromises)
+    .then(() => {
+        return res.send("Hue Lights Updated")
+    }).catch((err) => {
+        return res.status(500).send("Issue addressing one or more lights")
+    })
 })
 
 // ------------------------ //
@@ -149,7 +181,6 @@ app.get('/play/:playlistID',(req,res) => {
     .then(data => {
         return res.status(data.statusCode).send("Status Code: " + data.statusCode)
     }).catch((err) => {
-        console.error(err)
         return res.status(500).send(err)
     })
 })
@@ -159,7 +190,6 @@ app.get('/pause',(req,res) => {
     .then(data => {
         return res.status(data.statusCode).send("Status Code: " + data.statusCode)
     }).catch((err) => {
-        console.error(err)
         return res.status(500).send(err)
     })
 })
@@ -169,7 +199,6 @@ app.get('/listdevices',(req,res) => {
     .then(data => {
         return res.status(data.statusCode).json(data.body)
     }).catch((err) => {
-        console.error(err)
         return res.status(500).send(err)
     })
 })
@@ -189,21 +218,17 @@ app.get('/state/:num',(req,res) => {
         return spotifyApi.play(spotifyArgs)
     }).then((data) => {
         if (data.statusCode != 204) {
-            console.log("Status: " + data.statusCode)
             return res.status(500).send("Error with Spotify Play function")
         }
     }).then(() => {
-        return bridge.setLightState('5',state.lState)
-        .then((result) => {
-        }).fail((err) => {
-            console.error(err)
-            return res.status(500).send("Error with Hue API")
-        }).done()
+        let lightPromises = availableLights.map((lightID) => {
+            return bridge.setLightState(lightID,state.lState)
+        })
+        return Promise.all(lightPromises)
     }).then(() => {
         return res.send("Done")
     }).catch((err) => {
-        console.error(err)
-        res.status(500).send(err)
+        return res.status(500).send("Error: " + err)
     })
 })
 
@@ -212,12 +237,14 @@ app.get('/reset',(req,res) => {
     // Music to pause
     spotifyApi.pause()
     .then((result) => {
-        return bridge.setLightState('5',resetState)
+        let lightPromises = availableLights.map((lightID) => {
+            return bridge.setLightState(lightID,resetState)
+        })
+        return Promise.all(lightPromises)
     }).then(() => {
         return res.send("Reset Done")
     }).catch((err) => {
-        console.error(err)
-        res.status(500).send(err)
+        return res.status(500).send("Error: " + err)
     })
 })
 
