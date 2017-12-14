@@ -1,0 +1,14 @@
+Electronic Components Used:
+———————————————————————————
+
+OpenBCI Ganglion Board (https://shop.openbci.com/collections/frontpage/products/pre-order-ganglion-board?variant=13461804483)
+
+Gold Cup Electrodes (https://shop.openbci.com/collections/frontpage/products/openbci-gold-cup-electrodes?variant=9056028163)
+
+Li-ion Battery 3.7V (https://www.amazon.com/gp/product/B00J2QET64/)
+
+Phillips Hue Bridge (https://www.amazon.com/Philips-Bridge-Compatible-HomeKit-Assistant/dp/B016H0QZ7I/)
+
+Phillips Hue White and Color Bulb (https://www.amazon.com/Philips-Generation-Equivalent-Compatible-Assistant/dp/B01KJYSOHM/)
+
+TP-Link Wireless Wifi Travel Router (https://www.amazon.com/gp/product/B01CVOLGOG/)
