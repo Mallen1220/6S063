@@ -36,8 +36,8 @@ rollingCount = [0,0,0,0]
 maxF = 0
 maxR = 0
 
-maxF_i = 3
-maxR_i = 1
+maxF_i = 0
+maxR_i = 0
 
 
 def parseBandPower(addr, *args):
@@ -119,7 +119,10 @@ if __name__ == "__main__":
     # Reset light and music
     resetState()
 
+    # Main Loop Variables
     inp = None
+
+
     while (True):
         if inp == "calibrate" or inp == "c":
             # Run calibration
@@ -210,19 +213,24 @@ if __name__ == "__main__":
             request = requests.get(host + state_address + str(maxR_i))
             print(request.text)
             inp = None
-
-            #print(confidenceRelax(rollingAverageVal[0]))
-            pass
         elif inp == "focus" or inp == "f":
             # Use the calibrated settings to make user focused
             request = requests.get(host + state_address + str(maxF_i))
-            print(request.text)
+            print("State Changed")
             inp = None
         elif inp == "q" or inp == "quit":
             print("Quitting application...")
             break
+        elif inp == "h" or inp == "help":
+            print("Commands:")
+            print("q or quit            : quit application")
+            print("c or calibrate       : calibrate Trancendance system")
+            print("r or relax           : enter relaxed state after calibration")
+            print("f or focus           : enter focused state after calibration")
+            print("h or help            : display help menu")
+            inp = None
         else:
-            print("Enter input:")
+            print("Enter command or 'help' to see all commands:")
             inp = input()
 
 

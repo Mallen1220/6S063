@@ -25,6 +25,7 @@ username = 'JShMgr2F2OmUu5ZebZQtUTNsg0bkgUH0VjeG4qg5', // Max's bridge
 availableLights = []
 var bridge = new HueApi(host,username)
 
+// Get reachable lights from the Hue bridge we're connected to and store the light IDs
 bridge.lights()
 .then((data) => {
     availableLights = data.lights.filter((elem) => {
@@ -53,7 +54,7 @@ let jazztronica = 'spotify:user:spotify:playlist:37i9dQZF1DX55dNU0PWnO5'
 let piano = 'spotify:user:spotify:playlist:37i9dQZF1DX4sWSpwq3LiO'
 let deepfocus = 'spotify:user:spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'
 
-// Trancendance Obejct
+// Trancendance Obejct --> Different music and light combinations used for calibration
 const Trancendance = [
     {
         playlistID: chillHipHop,
