@@ -16,8 +16,8 @@ reset_address = '/reset'
 is_callibrated = False
 startTime = 0
 cycle = 0
-totalCycles = 6 # number of different music and light states
-duration = 2.0 # seconds per cycle
+totalCycles = 12 # 2 * number of different music and light states
+duration = 30.0 # seconds per cycle
 movingAverage = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
 movingTotal = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
 movingCount = [0,0,0,0]
@@ -41,8 +41,11 @@ maxR_i = 1
 
 
 def parseBandPower(addr, *args):
+    # args = args[:5]
     #print("BP: ",args)
     node = args[0] - 1
+    if node > 3:
+        return
     count = rollingCount[node]
     for band in range(5):
         oldValue = rollingAverage[node][band][count]
@@ -122,40 +125,64 @@ if __name__ == "__main__":
             # Run calibration
             if cycle == 0:
                 # Set first cycles light and music state
+                cycle += 1
+                print("Start focused activity")
+                print("(press any button to continue)")
+                input()
                 request = requests.get(host + state_address + str(cycle))
-
                 is_callibrated = False
                 startTime = time.time()
-                cycle += 1
                 print("Cycle: " + str(cycle))
-            if cycle <= totalCycles:
+            if cycle <= totalCycles/2:
                 if startTime + duration < time.time():
                     # Calculate final average number
                     f_c = 0
-                    r_c = 0
                     for node in range(4):
                         f_c += confidenceFocus(movingAverage[node])
-                        r_c += confidenceRelax(movingAverage[node])
                     f_c /= 4.0
-                    r_c /= 4.0
                     fConfidence.append(f_c)
-                    rConfidence.append(r_c)
 
-                    # print(f_c)
-                    # print(r_c)
-                    #print(movingTotal)
-                    #print(movingCount)
-
+                    # Change to the next cycle and adapt light and music state
+                    cycle += 1
+                    if cycle == int(totalCycles/2) + 1:
+                        # Reset lights and music before next set of cyles
+                        requests.get(host + reset_address)
+                        print("Switch to relaxed activity")
+                        print("(press anything to continue)")
+                        input()
+                    
                     # Move to next cycle
                     # Reset values
                     movingAverage = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
                     movingTotal = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
                     movingCount = [0,0,0,0]
 
-                    # Change to the next cycle and adapt light and music state
-                    request = requests.get(host + state_address + str(cycle))
+                    request = requests.get(host + state_address + str(cycle%int(totalCycles/2)))
                     startTime = time.time()
+                    print("Cycle: " + str(cycle))
+                else:
+                    # Calculate moving average using server
+                    continue
+            elif cycle <= totalCycles:
+                if startTime + duration < time.time():
+                    # Calculate final average number
+                    r_c = 0
+                    for node in range(4):
+                        r_c += confidenceRelax(movingAverage[node])
+                    r_c /= 4.0
+                    rConfidence.append(r_c)
+
+                    # Change to the next cycle and adapt light and music state
                     cycle += 1
+                    
+                    # Move to next cycle
+                    # Reset values
+                    movingAverage = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
+                    movingTotal = [[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
+                    movingCount = [0,0,0,0]
+
+                    request = requests.get(host + state_address + str(cycle%int(totalCycles/2)))
+                    startTime = time.time()
                     print("Cycle: " + str(cycle))
                 else:
                     # Calculate moving average using server
@@ -166,10 +193,10 @@ if __name__ == "__main__":
                 for c in range(len(fConfidence)):
                     if fConfidence[c] > maxF:
                         maxF = fConfidence[c]
-                        # maxF_i = c
+                        maxF_i = c
                     if rConfidence[c] > maxR:
                         maxR = rConfidence[c]
-                        # maxR_i = c
+                        maxR_i = c
 
                 print("Most Focused Setting: Setting #" + str(maxF_i))
                 print("Most Relaxed Setting: Setting #" + str(maxR_i))

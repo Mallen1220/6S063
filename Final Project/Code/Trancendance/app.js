@@ -18,10 +18,10 @@ var spotifyApi = new SpotifyWebApi({
 var hue = require('node-hue-api'),
 HueApi = hue.HueApi,
 lightState = hue.lightState,
-//host = '192.168.0.100', // Max's bridge
-// username = 'JShMgr2F2OmUu5ZebZQtUTNsg0bkgUH0VjeG4qg5', // Max's bridge
-host = '192.168.1.141', // Tim's bridge
-username = 'AqV0Pfsfnm1OQBnFDL2bf5HxkAKYHldbLw9MbF4m', // Tim's bridge
+host = '192.168.0.100', // Max's bridge
+username = 'JShMgr2F2OmUu5ZebZQtUTNsg0bkgUH0VjeG4qg5', // Max's bridge
+// host = '192.168.1.141', // Tim's bridge
+// username = 'AqV0Pfsfnm1OQBnFDL2bf5HxkAKYHldbLw9MbF4m', // Tim's bridge
 availableLights = []
 var bridge = new HueApi(host,username)
 
