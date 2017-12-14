@@ -1,0 +1,16 @@
+{
+  "name": "trancendance",
+  "version": "1.0.0",
+  "description": "Node.js web server for 6.S063 final project that will interface with our Python processing script and the Hue and Spotify APIs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.2",
+    "node-hue-api": "^2.4.2",
+    "spotify-web-api-node": "^2.5.0"
+  }
+}
